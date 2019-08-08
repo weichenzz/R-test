@@ -74,7 +74,7 @@ ggplot(aes(x = age, y = friend_count), data = pf) +
   geom_line(stat = 'summary', fun.y = mean) + 
   geom_line(stat = 'summary', fun.y = quantile, fun.args = list(probs = .1), linetype = 2, color = 'blue') +
   geom_line(stat = 'summary', fun.y = quantile, fun.args = list(probs = .5), color = 'red')
-
+#常用的方法：filter（），group_by(),arrange()
 install.packages('dplyr')
 library(dplyr)
 
@@ -133,6 +133,83 @@ p3 <- ggplot(aes(x = round(age / 5) * 5, y = friend_count),
   geom_line(stat = 'summary', fun.y = mean)
 
 grid.arrange(p1, p2, p3, ncol = 1)
+#以男性和女性的中位数来进行绘图
+ggplot(aes(x = age, y = friend_count),
+       data = subset(pf, !is.na(gender))) + 
+  geom_line(aes(color = gender), stat = 'summary', fun.y = median)
+
+#使用%>%来重组数据
+pf.fc_by_age_gender <- pf %>%
+  filter(!is.na(gender)) %>%
+  group_by(age, gender) %>%
+  summarise(mean_friend_count = mean(friend_count),
+            median_friend_count = median(friend_count),
+            n = n()) %>%
+  ungroup() %>%
+  arrange(age)
+ggplot(aes(x = age, y = median_friend_count), 
+           data = pf.fc_by_age_gender,
+       ) + 
+  geom_line(aes(color = gender))
+
+#长格式数据变为短格式数据
+#melt-把宽格式数据转化成长格式。
+#cast-把长格式数据转化成宽格式。（dcast-输出时返回一个数据框。acast-输出时返回一个向量/矩阵/数组。）
+install.packages('reshape2')
+library(reshape2)
+
+pf.fc_by_age_gender.wide <- dcast(pf.fc_by_age_gender,
+                                  age ~ gender,
+                                  value.var = 'median_friend_count')
+head(pf.fc_by_age_gender.wide)
+p1 <- ggplot(aes(x = age, y = female / male),
+       data = pf.fc_by_age_gender.wide) +
+  geom_line()
+p2 <- ggplot(aes(x = age, y = female / male),
+             data = pf.fc_by_age_gender.wide) +
+  geom_line() + 
+  geom_hline(yintercept = 1, alpha = .3, linetype = 2)
+
+grid.arrange(p1, p2)
+
+pf$year_join <- floor(2014 - pf$tenure/365)
+
+summary(pf$year_join)
+table(pf$year_join)
+
+#cut
+#默认左开右闭，添加right = F后为左闭右开
+pf$year_join.bucket <- cut(pf$year_join,
+                           c(2004, 2009, 2011, 2012, 2014))
+table(pf$year_join.bucket)
+#年限绘制图像
+ggplot(aes(x = age, y = friend_count), 
+       data = subset(pf, !is.na(year_join.bucket))) +
+  geom_line(aes(color = year_join.bucket),
+            stat = 'summary', fun.y = mean) +
+  geom_line(stat = 'summary', fun.y = mean, linetype = 2)
+#按好友率分组
+names(pf)
+ggplot(aes(x = tenure, y = friendships_initiated / tenure),
+       data = subset(pf, tenure >= 1)) +
+  geom_line(aes(color = year_join.bucket),
+            stat = 'summary',
+            fun.y = mean)
+#使用平滑器
+ggplot(aes(x = tenure, y = friendships_initiated / tenure),
+       data = subset(pf, tenure >= 1)) +
+  geom_smooth(aes(color = year_join.bucket))
+
+install.packages('GGally')
+library(GGally)
+
+set.seed(100)
+pf_subset <- pf[, c(2:15)]
+names(pf_subset)
+ggpairs(pf_subset[sample.int(nrow(pf_subset),1000), ])
+
+
+
 
 
 
