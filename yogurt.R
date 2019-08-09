@@ -17,7 +17,7 @@ qplot(x = all.purchases, data = yo_pf, binwidth = 1, fill = I('red'))
 
 #使用抖动图
 ggplot(aes(x = time, y = price), data = yo_pf) +
- geom_jitter(alpha = 1/4, shape = 21, fill = I('red'))
+  geom_jitter(alpha = 1/4, shape = 21, fill = I('red'))
 
 #set.seed()的作用是可以取相同的随机数，括号中的数字是一个key而并非运算次数
 set.seed(420)
@@ -27,10 +27,10 @@ sample.ids <- sample(levels(yo_pf$id), 16)
 yo_pf$all.purchases
 # x %in% y：对于 x 中的每一个条目，该向量都会检查这一条目是否也出现在 y 中
 ggplot(aes(x = time, y = price), data = subset(yo_pf,id %in% sample.ids)) +
- facet_wrap(~ id) +
- geom_line() +
-#pch表示绘图时点的形状
- geom_point(aes(size = all.purchases), pch = 21)
+  facet_wrap(~ id) +
+  geom_line() +
+  #pch表示绘图时点的形状
+  geom_point(aes(size = all.purchases), pch = 21)
 
 library(GGally)
 
